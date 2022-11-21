@@ -1,12 +1,4 @@
-﻿___TERMS_OF_SERVICE___
-
-By creating or modifying this file you agree to Google Tag Manager's Community
-Template Gallery Developer Terms of Service available at
-https://developers.google.com/tag-manager/gallery-tos (or such other URL as
-Google may provide), as modified from time to time.
-
-
-___INFO___
+﻿___INFO___
 
 {
   "type": "MACRO",
@@ -28,7 +20,6 @@ ___TEMPLATE_PARAMETERS___
     "type": "SELECT",
     "name": "format",
     "displayName": "Format",
-    "macrosInSelect": false,
     "selectItems": [
       {
         "value": "yyyyww",
@@ -64,7 +55,179 @@ ___TEMPLATE_PARAMETERS___
       }
     ],
     "simpleValueType": true,
-    "alwaysInSummary": true
+    "alwaysInSummary": true,
+    "valueValidators": [
+      {
+        "type": "NON_EMPTY"
+      }
+    ]
+  },
+  {
+    "type": "SELECT",
+    "name": "timezone",
+    "displayName": "Timezone (server)",
+    "selectItems": [
+      {
+        "value": "-1200",
+        "displayValue": "UTC-12:00"
+      },
+      {
+        "value": "-1100",
+        "displayValue": "UTC-11:00"
+      },
+      {
+        "value": "-1000",
+        "displayValue": "UTC-10:00"
+      },
+      {
+        "value": "-0930",
+        "displayValue": "UTC-09:30"
+      },
+      {
+        "value": "-0900",
+        "displayValue": "UTC-09:00"
+      },
+      {
+        "value": "-0800",
+        "displayValue": "UTC-08:00"
+      },
+      {
+        "value": "-0700",
+        "displayValue": "UTC-07:00"
+      },
+      {
+        "value": "-0600",
+        "displayValue": "UTC-06:00"
+      },
+      {
+        "value": "-0500",
+        "displayValue": "UTC-05:00"
+      },
+      {
+        "value": "-0400",
+        "displayValue": "UTC-04:00"
+      },
+      {
+        "value": "-0330",
+        "displayValue": "UTC-03:30"
+      },
+      {
+        "value": "-0300",
+        "displayValue": "UTC-03:00"
+      },
+      {
+        "value": "-0200",
+        "displayValue": "UTC-02:00"
+      },
+      {
+        "value": "-0100",
+        "displayValue": "UTC-01:00"
+      },
+      {
+        "value": "0000",
+        "displayValue": "UTC"
+      },
+      {
+        "value": "0100",
+        "displayValue": "UTC+01:00"
+      },
+      {
+        "value": "0200",
+        "displayValue": "UTC+02:00"
+      },
+      {
+        "value": "0300",
+        "displayValue": "UTC+03:00"
+      },
+      {
+        "value": "0330",
+        "displayValue": "UTC+03:30"
+      },
+      {
+        "value": "0400",
+        "displayValue": "UTC+04:00"
+      },
+      {
+        "value": "0430",
+        "displayValue": "UTC+04:30"
+      },
+      {
+        "value": "0500",
+        "displayValue": "UTC+05:00"
+      },
+      {
+        "value": "0530",
+        "displayValue": "UTC+05:30"
+      },
+      {
+        "value": "0545",
+        "displayValue": "UTC+05:45"
+      },
+      {
+        "value": "0600",
+        "displayValue": "UTC+06:00"
+      },
+      {
+        "value": "0630",
+        "displayValue": "UTC+06:30"
+      },
+      {
+        "value": "0700",
+        "displayValue": "UTC+07:00"
+      },
+      {
+        "value": "0800",
+        "displayValue": "UTC+08:00"
+      },
+      {
+        "value": "0845",
+        "displayValue": "UTC+08:45"
+      },
+      {
+        "value": "0900",
+        "displayValue": "UTC+09:00"
+      },
+      {
+        "value": "0930",
+        "displayValue": "UTC+09:30"
+      },
+      {
+        "value": "1000",
+        "displayValue": "UTC+10:00"
+      },
+      {
+        "value": "1030",
+        "displayValue": "UTC+10:30"
+      },
+      {
+        "value": "1100",
+        "displayValue": "UTC+11:00"
+      },
+      {
+        "value": "1200",
+        "displayValue": "UTC+12:00"
+      },
+      {
+        "value": "1245",
+        "displayValue": "UTC+12:45"
+      },
+      {
+        "value": "1300",
+        "displayValue": "UTC+13:00"
+      },
+      {
+        "value": "1400",
+        "displayValue": "UTC+14:00"
+      }
+    ],
+    "simpleValueType": true,
+    "alwaysInSummary": true,
+    "valueValidators": [
+      {
+        "type": "NON_EMPTY"
+      }
+    ],
+    "help": "The timezone of the collection server / Google Analytics property. This information is used to adjust the week number based on server timezone so the outcome would be the same regardless of user\u0027s device timezone."
   }
 ]
 
@@ -76,6 +239,7 @@ const log = require('logToConsole');
 const Math = require('Math');
 const getTimestampMillis = require('getTimestampMillis');
 const makeString = require('makeString');
+const makeNumber = require('makeNumber');
 log('data =', data);
 
 // Return number as string with leading zeros
@@ -169,7 +333,16 @@ function getWeekDay(year, daysSinceJan1st) {
 // MAIN CODE START:
 
 // Get current Epoch timestamp and convert it to number of days since 1970-01-01
-const timestamp = getTimestampMillis();
+const timezone = makeNumber(data.timezone);
+let offsetMillis = 0;
+if (timezone != 0) {
+  const offsetMins = (timezone % 100) * timezone/Math.abs(timezone); // Keep the correct sign
+  const offsetHours = Math.floor(timezone / 100);
+  offsetMillis = (offsetHours*60+offsetMins)*60*1000;
+}
+
+const timestamp = getTimestampMillis() + offsetMillis;
+
 let days = Math.floor(timestamp/(24*60*60*1000));
 //log('days since 1970:', days);
 
@@ -308,6 +481,7 @@ scenarios:
   code: |+
     const mockData = {
       'format': "ww",
+      'timezone': "0000"
     };
 
     const monday = 1577679754000;
@@ -345,6 +519,7 @@ scenarios:
   code: |+
     const mockData = {
       'format': "w",
+      'timezone': "0000"
     };
 
     const monday = 1580083200000;
@@ -382,6 +557,7 @@ scenarios:
   code: |+
     const mockData = {
       'format': "yyyyww",
+      'timezone': "0000"
     };
 
     const monday = 1582502400000;
@@ -419,6 +595,7 @@ scenarios:
   code: |+
     const mockData = {
       'format': "yyyywww",
+      'timezone': "0000"
     };
 
     const monday = 1609113600000;
@@ -458,6 +635,7 @@ scenarios:
   code: |+
     const mockData = {
       'format': "yyyyww",
+      'timezone': "0000"
     };
 
     const monday = 1640563200000;
@@ -495,6 +673,7 @@ scenarios:
   code: |+
     const mockData = {
       'format': "yyyy-ww",
+      'timezone': "0000"
     };
 
     const monday = 1668421354000;
@@ -532,6 +711,7 @@ scenarios:
   code: |+
     const mockData = {
       'format': "yyyy-www",
+      'timezone': "0000"
     };
 
     const monday = 1641248554000;
@@ -569,6 +749,7 @@ scenarios:
   code: |+
     const mockData = {
       'format': "yyyy-www-d",
+      'timezone': "0000"
     };
 
     const monday = 1672012800000;
@@ -606,6 +787,7 @@ scenarios:
   code: |-
     const mockData = {
       'format': "yyyy-www-dd",
+      'timezone': "0000"
     };
 
     const monday = 1672617600000;
@@ -638,10 +820,85 @@ scenarios:
     mock('getTimestampMillis', monday + 24*60*60*1000*6);
     variableResult = runCode(mockData);
     assertThat(variableResult).isEqualTo(weekNumber + '07');
+- name: 2022-11-14 to 2022-11-20 / format 202246 / UTC 220100 timezone +0200
+  code: |+
+    const mockData = {
+      'format': "yyyyww",
+      'timezone': "0200"
+    };
+
+    const monday = 1668463260000;
+    const weekNumber = '202246';
+
+    mock('getTimestampMillis', monday);
+    let variableResult = runCode(mockData);
+    assertThat(variableResult).isEqualTo(weekNumber);
+
+    mock('getTimestampMillis', monday + 24*60*60*1000);
+    variableResult = runCode(mockData);
+    assertThat(variableResult).isEqualTo(weekNumber);
+
+    mock('getTimestampMillis', monday + 24*60*60*1000*2);
+    variableResult = runCode(mockData);
+    assertThat(variableResult).isEqualTo(weekNumber);
+
+    mock('getTimestampMillis', monday + 24*60*60*1000*3);
+    variableResult = runCode(mockData);
+    assertThat(variableResult).isEqualTo(weekNumber);
+
+    mock('getTimestampMillis', monday + 24*60*60*1000*4);
+    variableResult = runCode(mockData);
+    assertThat(variableResult).isEqualTo(weekNumber);
+
+    mock('getTimestampMillis', monday + 24*60*60*1000*5);
+    variableResult = runCode(mockData);
+    assertThat(variableResult).isEqualTo(weekNumber);
+
+    mock('getTimestampMillis', monday + 24*60*60*1000*6);
+    variableResult = runCode(mockData);
+    assertThat(variableResult).isEqualTo("202247");
+
+- name: 2022-11-14 to 2022-11-20 / format 202246 / UTC 000000 timezone -0200
+  code: |+
+    const mockData = {
+      'format': "yyyyww",
+      'timezone': "-0200"
+    };
+
+    const monday = 1668384000000;
+    const weekNumber = '202246';
+
+    mock('getTimestampMillis', monday);
+    let variableResult = runCode(mockData);
+    assertThat(variableResult).isEqualTo('202245');
+
+    mock('getTimestampMillis', monday + 24*60*60*1000);
+    variableResult = runCode(mockData);
+    assertThat(variableResult).isEqualTo(weekNumber);
+
+    mock('getTimestampMillis', monday + 24*60*60*1000*2);
+    variableResult = runCode(mockData);
+    assertThat(variableResult).isEqualTo(weekNumber);
+
+    mock('getTimestampMillis', monday + 24*60*60*1000*3);
+    variableResult = runCode(mockData);
+    assertThat(variableResult).isEqualTo(weekNumber);
+
+    mock('getTimestampMillis', monday + 24*60*60*1000*4);
+    variableResult = runCode(mockData);
+    assertThat(variableResult).isEqualTo(weekNumber);
+
+    mock('getTimestampMillis', monday + 24*60*60*1000*5);
+    variableResult = runCode(mockData);
+    assertThat(variableResult).isEqualTo(weekNumber);
+
+    mock('getTimestampMillis', monday + 24*60*60*1000*6);
+    variableResult = runCode(mockData);
+    assertThat(variableResult).isEqualTo(weekNumber);
 
 
 ___NOTES___
 
-Created on 18/11/2022, 16:10:36
+Created on 21/11/2022, 14:12:26
 
 
